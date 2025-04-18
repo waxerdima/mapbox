@@ -44,6 +44,8 @@
   <!-- JS библиотеки Mapbox -->
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js"></script>
   <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.5.0/mapbox-gl-draw.js"></script>
+  <script src="https://unpkg.com/@mapbox/polyline"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
   <script>
     var button = document.querySelector('.js-draw-area');
@@ -194,7 +196,20 @@
           coordinates: [currentCoords]
         }
       };
+      console.log('currentCoords', currentCoords, polyline.encode(currentCoords))
+      fetch('https://www.bazaraki.com/api/v2/spa/geo/google-polygon-info/?polygon_str=' + polyline.encode(currentCoords)).then((response) => {
+        return response.json()
+      }).then((response) => {
+        // console.log(response)
+        // map.setCenter([response.center.lat, response.center.lng]);
+        const bbox = turf.bbox(turf.buffer(turf.point([response.center.lat, response.center.lng]), response.max_distance_from_center, { units: 'meters' }));
 
+        // Теперь подгоняем карту под рамку
+        map.fitBounds(bbox, {
+          padding: 20, // можно увеличить отступ
+          duration: 1000 // анимация
+        });
+      })
       draw.add(polygon);
 
       var brandSvgRaw = '<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="20" fill="#EA5E00"/><path d="M16.7071 15.2929C16.3166 14.9024 15.6834 14.9024 15.2929 15.2929C14.9024 15.6834 14.9024 16.3166 15.2929 16.7071L17.7678 19.182C18.1583 19.5725 18.1583 20.2057 17.7678 20.5962L15.2929 23.0711C14.9024 23.4616 14.9024 24.0948 15.2929 24.4853C15.6834 24.8758 16.3166 24.8758 16.7071 24.4853L19.182 22.0104C19.5725 21.6199 20.2057 21.6199 20.5962 22.0104L23.0711 24.4853C23.4616 24.8758 24.0948 24.8758 24.4853 24.4853C24.8758 24.0948 24.8758 23.4616 24.4853 23.0711L22.0104 20.5962C21.6199 20.2057 21.6199 19.5725 22.0104 19.182L24.4853 16.7071C24.8758 16.3166 24.8758 15.6834 24.4853 15.2929C24.0948 14.9024 23.4616 14.9024 23.0711 15.2929L20.5962 17.7678C20.2057 18.1583 19.5725 18.1583 19.182 17.7678L16.7071 15.2929Z" fill="white"/></svg>';
